@@ -85,7 +85,7 @@ def main(argv):
   print(summary)
     
   # TODO: turn this into a PDF report
-  summary_pdf = 'The Mercedes-Benz E-Class (2009) generated the most revenue: $22749529.02<br/>The Acura Integra (1995) had the most sales: 1192<br/>The most popular year was 2007 with 21534.'
+  summary_pdf = "<br/>".join(summary)
   
   reports.generate("/tmp/cars.pdf", "Sales Data", summary_pdf, cars_dict_to_table(data))
 
@@ -94,7 +94,7 @@ def main(argv):
   sender =  "automation@example.com"
   receiver = "{}@example.com".format(os.environ.get('USER'))
   subject = "Sales summary for last month"
-  body =  'The Mercedes-Benz E-Class (2009) generated the most revenue: $22749529.02\nThe Acura Integra (1995) had the most sales: 1192\nThe most popular year was 2007 with 21534.'
+  body =  "\n".join(summary)
   
   message = emails.generate(sender, receiver, subject, body, "/tmp/cars.pdf")
   emails.send(message)
