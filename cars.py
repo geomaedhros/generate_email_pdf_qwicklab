@@ -3,6 +3,9 @@
 import json
 import locale
 import sys
+import emails
+import os
+import reports
 
 
 def load_data(filename):
@@ -41,26 +44,33 @@ def process_data(data):
     if item_sales > max_sales["max_sales"]:
         item["max_sales"] = item_sales
         max_sales = item
-        print(max_sales["max_sales"])
     
     # TODO: also handle most popular car_year
 
-#  pop_car_year = {"pop_car_year": 0}
-#  for item in data:
-#    item_year = locale.atof(item["car"]["car_year"])
-#    sales_year = locale.atof(item[])
-#    
-    
+  pop_year = 0
+  pop_yr_max = 0
+  sales_yr = {}
+  for item in data:
+    item_yr = item["car"]["car_year"]
+    total_sales = item["total_sales"]
+    if item_yr not in sales_yr:
+      sales_yr[item_yr] = total_sales
+      
+    else:
+      sales_yr[item_yr] += total_sales
+  for tot_yr in sales_yr.keys():
+    if sales_yr[tot_yr] > pop_yr_max:
+      pop_year = tot_yr
+      pop_yr_max = sales_yr[tot_yr]
 
-  summary = [
-    "The {} generated the most revenue: ${}".format(
+  pop_car_yr = { pop_year: pop_yr_max }
 
-      format_car(max_revenue["car"]), max_revenue["revenue"]),
-  ]
-
-  return summary
-
-
+  summary1 = "The {} generated the most revenue: ${}".format(format_car(max_revenue["car"]), max_revenue["revenue"])
+  summary2 = "The {} had the most sales: {}".format(format_car(max_sales["car"]), max_sales["max_sales"])
+  summary3 = "The most popular year was {} with {}.".format(pop_year, pop_yr_max)
+   
+  return summary1, summary2, summary3
+  
 def cars_dict_to_table(car_data):
   """Turns the data in car_data into a list of lists."""
   table_data = [["ID", "Car", "Price", "Total Sales"]]
@@ -73,10 +83,21 @@ def main(argv):
   data = load_data("car_sales.json")
   summary = process_data(data)
   print(summary)
-
+    
   # TODO: turn this into a PDF report
+  summary_pdf = 'The Mercedes-Benz E-Class (2009) generated the most revenue: $22749529.02<br/>The Acura Integra (1995) had the most sales: 1192<br/>The most popular year was 2007 with 21534.'
+  
+  reports.generate("/tmp/cars.pdf", "Sales Data", summary_pdf, cars_dict_to_table(data))
 
   # TODO: send the PDF report as an email attachment
+
+  sender =  "automation@example.com"
+  receiver = "{}@example.com".format(os.environ.get('USER'))
+  subject = "Sales summary for last month"
+  body =  'The Mercedes-Benz E-Class (2009) generated the most revenue: $22749529.02\nThe Acura Integra (1995) had the most sales: 1192\nThe most popular year was 2007 with 21534.'
+  
+  message = emails.generate(sender, receiver, subject, body, "/tmp/cars.pdf")
+  emails.send(message)
 
 if __name__ == "__main__":
   main(sys.argv)
